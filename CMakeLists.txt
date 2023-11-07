@@ -1,0 +1,6 @@
+project(gpt C)
+cmake_minimum_required(VERSION 3.11)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_FLAGS "-O3 -w")
+add_executable(main main.c)
+target_link_libraries(main m)
