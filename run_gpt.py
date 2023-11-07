@@ -111,7 +111,7 @@ class GPTConfig:
     # vocab_size: int = 10  # vocab size
     # n_layer: int = 2
     n_head: int = 1
-    block_size: int = 4096  # length of sequence
+    block_size: int = 512  # length of sequence
     n_embd: int = 2048
     dropout: float = 0.0
     bias: bool = False
@@ -124,7 +124,7 @@ if __name__ == "__main__":
     config = GPTConfig()
     print(config)
     B = 1
-    T = 4096
+    T = 512
     C = 2048
 
     # x = torch.randn((1, 16, 128))

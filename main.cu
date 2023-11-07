@@ -3,7 +3,7 @@
 #include <cmath>
 #include <ctime>
 // #include <cuda_runtime.h>
-#define T 4096
+#define T 512
 #define C 2048
 
 void fill_val(float *A, int m, int n, float value){

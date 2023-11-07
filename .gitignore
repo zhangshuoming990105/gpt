@@ -1,3 +1,5 @@
 build
 .pkl_memoize_py3
 .pytest_cache
+cpu_main
+gpu_main
