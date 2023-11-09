@@ -18,6 +18,6 @@ the result shows that ~99% of the time is spent on the `matmul` kernel, which is
 - [x] tvm gpu
 - [x] naive cpu implementation
 - [x] naive gpu implementation
-- [] optimized gpu implementation
-- [] autotvm gpu
-- [] ansor gpu
+- [ ] optimized gpu implementation
+- [ ] autotvm gpu
+- [ ] ansor gpu
