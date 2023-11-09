@@ -239,6 +239,6 @@ int main() {
     3. only one block
     4. skip layernorm
     */
-    RunGPU(10);
+    RunGPU(1);
     return 0;
 }
