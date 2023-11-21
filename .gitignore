@@ -3,3 +3,6 @@ build
 .pytest_cache
 cpu_main
 gpu_main
+triton_kernel
+*.sqlite
+*.nsys-rep

@@ -3,9 +3,14 @@
 ## we target on the attention block optimization for simplicity
 
 ```bash
+ncu ./gpu_main > ncu_prof.log
 nsys profile gpu_main
-nsys export -t json report1.nsys-rep
-nsys stats report1.nsys-rep
+nsys stats report1.nsys-rep > nsys_prof.log
+
+ncu python run_gpt.py > ncu_prof_pytorch.log
+nsys profile python run_gpt.py
+nsys stats report2.nsys-rep > nsys_prof_pytorch.log
+
 ```
 
 the result shows that ~99% of the time is spent on the `matmul` kernel, which is the bottleneck of the attention block.

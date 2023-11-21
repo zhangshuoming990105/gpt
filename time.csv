@@ -1,0 +1,4 @@
+pytorch cpu time, total cpu time, pytorch gpu time, naive cpu time, naive gpu time
+14.36, 281.14, 1.630, 33314.55, 55.82
+14.12, 278.09, 1.638, 32865.67, 55.82
+14.22, 280.59, 1.635, 32801.57, 55.84

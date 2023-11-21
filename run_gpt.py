@@ -9,15 +9,6 @@ import time
 
 torch.manual_seed(42)
 
-class LayerNorm(nn.Module):
-    def __init__(self, ndim, bias):
-        super().__init__()
-        self.weight = nn.Parameter(torch.ones(ndim))
-        self.bias = nn.Parameter(torch.zeros(ndim)) if bias else None
-
-    def forward(self, input):
-        return F.layer_norm(input, self.weight.shape, self.weight, self.bias, 1e-5)
-
 
 class CasualSelfAttention(nn.Module):
     def __init__(self, config):
@@ -75,37 +66,6 @@ class CasualSelfAttention(nn.Module):
         y = self.resid_dropout(self.c_proj(y))
         return y
 
-
-class MLP(nn.Module):
-    def __init__(self, config):
-        super().__init__()
-        self.c_fc = nn.Linear(config.n_embd, config.n_embd * 4, bias=config.bias)
-        self.gelu = nn.GELU()
-        self.c_proj = nn.Linear(config.n_embd * 4, config.n_embd, bias=config.bias)
-        self.dropout = nn.Dropout(config.dropout)
-
-    def forward(self, x):
-        x = self.c_fc(x)
-        x = self.gelu(x)
-        x = self.c_proj(x)
-        x = self.dropout(x)
-        return x
-
-
-class Block(nn.Module):
-    def __init__(self, config):
-        super().__init__()
-        self.ln_1 = nn.LayerNorm(config.n_embd)
-        self.attn = CasualSelfAttention(config)
-        self.ln_2 = nn.LayerNorm(config.n_embd)
-        self.mlp = MLP(config)
-
-    def forward(self, x):
-        x = x + self.attn(self.ln_1(x))
-        x = x + self.mlp(self.ln_2(x))
-        return x
-
-
 @dataclass
 class GPTConfig:
     # vocab_size: int = 10  # vocab size
@@ -118,45 +78,55 @@ class GPTConfig:
 
 
 if __name__ == "__main__":
-    device = "cuda"
-   
-    print("Using {} device".format(device))
+
     config = GPTConfig()
     print(config)
     B = 1
     T = 512
     C = 2048
+    n = 1
 
-    # x = torch.randn((1, 16, 128))
+
+    # native pytorch baseline time test
+    device = "cuda"
+    print("Using {} device".format(device))
     x = torch.randn((B, T, C), device=device)
     model = CasualSelfAttention(config)
     model.eval()
     model.to(device)
-    # native pytorch baseline time test
-    t1 = time.time()
-    for i in range(1000):
+    t1 = time.perf_counter()
+    for i in range(n):
         y = model.forward(x)
-    t2 = time.time()
-    print("Pytorch gpu baseline time: {} ms".format((t2 - t1)))
-    device = "cpu"
-    x = torch.randn((B, T, C), device=device)
-    model = CasualSelfAttention(config)
-    model.eval()
-    model.to(device)
-    # native pytorch baseline time test
-    t1 = time.time()
-    for i in range(100):
-        y = model.forward(x)
-    t2 = time.time()
-    print("Pytorch cpu baseline time: {} ms".format((t2 - t1)*10))
+        torch.cuda.synchronize()
+    t2 = time.perf_counter()
+    print("Pytorch gpu baseline time: {} ms".format((t2 - t1)*1000/n))
+    # time.sleep(1)
+    # device = "cpu"
+    # print("Using {} device".format(device))
+    # x = torch.randn((B, T, C), device=device)
+    # model = CasualSelfAttention(config)
+    # model.eval()
+    # model.to(device)
+    # # native pytorch baseline time test
+    # t1 = time.perf_counter(), time.process_time()
+    # for i in range(n):
+    #     y = model.forward(x)
+    #     torch.cpu.synchronize()
+    # t2 = time.perf_counter(), time.process_time()
+    # print(f"Pytorch cpu baseline time: {(t2[0] - t1[0])*1000/n:.2f} ms")
+    # print(f"total CPU time: {(t2[1] - t1[1])*1000/n:.2f} ms")
     
-    import tvm
-    from tvm.topi.utils import traverse_inline, get_const_tuple
-    from tvm import te, tir, auto_scheduler, topi, autotvm
-    from tvm import relay
+
+
+
+    ##### tvm part not used yet
+    # import tvm
+    # from tvm.topi.utils import traverse_inline, get_const_tuple
+    # from tvm import te, tir, auto_scheduler, topi, autotvm
+    # from tvm import relay
     # scripted_model = torch.jit.trace(model, x).eval()
     # input_name = "input0"
-    # shape_list = [(input_name, (1, 16, 128))]
+    # shape_list = [(input_name, (B, T, C))]
     # mod, params = relay.frontend.from_pytorch(scripted_model, shape_list)
     # # print(mod.astext())
     # target = tvm.target.Target("cuda", host="llvm")
@@ -167,14 +137,14 @@ if __name__ == "__main__":
     # dtype = "float32"
     # # print(lib.ir_mod)
     # # print(lib.function_metadata)
-    # print("imported modules")
-    # print(lib.lib.imported_modules[0].get_source())
+    # # print("imported modules")
+    # # print(lib.lib.imported_modules[0].get_source())
 
 
 
     # from tvm.contrib import graph_executor
     # m = graph_executor.GraphModule(lib["default"](dev))
-    # x = torch.randn((1, 16, 128))
+    # x = torch.randn((B, T, C))
     
     # t3 = time.time()
     # for i in range(1000):
@@ -185,7 +155,7 @@ if __name__ == "__main__":
     # print("Naive tvm time: {} ms".format((t4 - t3)))
 
 
-    # optimal tvm time test, O3
+    # # optimal tvm time test, O3
     # with tvm.transform.PassContext(opt_level=3):
     #     lib = relay.build(mod, target=target, params=params)
     # m = graph_executor.GraphModule(lib["default"](dev))
